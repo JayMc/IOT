@@ -1,2 +1,2 @@
-#define incSSID ""
-#define incPASS ""// your wifi password
+#define incSSID "boo"
+#define incPASS "87190165J"// your wifi password

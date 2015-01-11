@@ -1,4 +1,5 @@
 node_modules/
+IOT/config.h
 
 # Windows image file caches
 Thumbs.db
