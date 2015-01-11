@@ -1,5 +1,5 @@
-node_modules/
 IOT/config.h
+node_modules/
 
 # Windows image file caches
 Thumbs.db
