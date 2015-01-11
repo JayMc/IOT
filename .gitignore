@@ -1,4 +1,5 @@
 IOT/config.h
+IOT/configj.h
 node_modules/
 
 # Windows image file caches
