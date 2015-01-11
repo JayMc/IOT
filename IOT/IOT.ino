@@ -22,11 +22,13 @@ pin GND to ESP8622 GND
 Use CoolTerm connected to the FTDI to monitor the Serial commands
 
 */
-
+#include "config.h"
 #include <SoftwareSerial.h>
 
-#define SSID "boo" // your wifi ssid
-#define PASS "" // your wifi password
+const char SSID[] = incSSID;
+//#define SSID "boo" // your wifi ssid
+const char PASS[] = incPASS;
+//#define PASS = incPASS // your wifi password
 #define DST_IP "192.168.1.107" // IOT Server IP
 #define DST_PORT 7777 // IOT Server port
 #define PIN_OFFSET 2 // how many pins to ignore, by default ignore first two (used for soft serial)
