@@ -29,6 +29,9 @@ const char SSID[] = incSSID;
 //#define SSID "boo" // your wifi ssid
 const char PASS[] = incPASS;
 //#define PASS = incPASS // your wifi password
+const int lightThreshold = incLightThreshold;
+bool roomLightState = false;
+bool newRoomLightState = false;
 #define DST_IP "192.168.1.107" // IOT Server IP
 #define DST_PORT 7777 // IOT Server port
 #define PIN_OFFSET 2 // how many pins to ignore, by default ignore first two (used for soft serial)
@@ -48,24 +51,20 @@ void setup()
 	dbgSerial.begin(9600);
 	dbgSerial.println("IOT Started...");
 
-	for (int i = PIN_OFFSET; i <= PIN_MAX; i++)
-	{
+	for (int i = PIN_OFFSET; i <= PIN_MAX; i++){
   		pinMode(i, OUTPUT);
   		lastInputState[i] = -1;
 	}
 
-	if (!detectESP8266())
-	{
+	if (!detectESP8266()){
 		fail();
 	}
 
 	delay(500);
 
 	boolean connected = false;
-	for (int i = 0; i < 15; i++)
-	{
-		if (connectToWiFi())
-		{
+	for (int i = 0; i < 15; i++){
+		if (connectToWiFi()){
 			connected = true;
 			break;
 		}
@@ -77,17 +76,15 @@ void setup()
 	Serial.println("AT+CIPMUX=0"); //set the single connection mode
 }
 
-void loop()
-{
+void loop(){
         checkPins();
+        delay(500);
 }
 
-void checkPins()
-{
-        bool dataToSend = true;
+void checkPins(){
+        bool dataToSend = false;
         String data = "{";
-  	/*for (int i = PIN_OFFSET; i <= PIN_MAX; i++)
-	{
+  	/*for (int i = PIN_OFFSET; i <= PIN_MAX; i++){
 		currentInputState = digitalRead(i);
 		if (currentInputState != lastInputState[i]) {
                         if (data.length() > 1) data += ","; //if we already have data
@@ -99,18 +96,37 @@ void checkPins()
                         lastInputState[i] = currentInputState;
 		}
 	}*/
+
+        //get light level
+        int roomVal = analogRead(A0);        
+        dbgSerial.println(roomVal);  
+        dbgSerial.println(lightThreshold);        
+        if(roomVal > lightThreshold){
+          newRoomLightState = true;
+        }
+        if(roomVal <= lightThreshold){
+          newRoomLightState = false;
+        }
+        
+        //check if light level has changed
+        if(roomLightState != newRoomLightState){
+          dbgSerial.println("light level changed");
+          
           data += "\"A0";
           data += "\":";
           data += analogRead(A0);
-          
-          data += "}\r\n";
+          data += "}\r\n";          
+          dataToSend = true;
+          roomLightState = newRoomLightState;
+        }
+
+        //send data if there is anything to report on
         if(dataToSend) {
-          	sendData(data);
+          sendData(data);
         }
 }
 
-boolean sendData(String data)
-{
+boolean sendData(String data){
 	String cmd = "AT+CIPSTART=\"TCP\",\"";
 	cmd += DST_IP;
 	cmd += "\",";
@@ -129,12 +145,9 @@ boolean sendData(String data)
 	Serial.print("AT+CIPSEND=");
 	Serial.println(cmd.length());
         delay(500);
-	if (Serial.find(">"))
-	{
+	if (Serial.find(">")){
 		dbgSerial.print(">");
-	}
-	else
-	{
+	}else{
 		Serial.println("AT+CIPCLOSE");
 		dbgSerial.println("Connection timed out.");
 		delay(500);
@@ -153,8 +166,7 @@ boolean sendData(String data)
 	return true;
 }
 
-boolean connectToWiFi()
-{
+boolean connectToWiFi(){
 	Serial.println("AT+CWMODE=1");
 	String cmd = "AT+CWJAP=\"";
 	cmd += SSID;
@@ -164,44 +176,35 @@ boolean connectToWiFi()
 	dbgSerial.println(cmd);
 	Serial.println(cmd);
 	delay(3000);
-	if (Serial.find("OK"))
-	{
+	if (Serial.find("OK")){
 		dbgSerial.println("Connected to WiFi.");
 		return true;
-	}
-	else
-	{
+	}else{
 		dbgSerial.println("Failed to connect to WiFi.");
 		return false;
 	}
 }
 
-boolean detectESP8266()
-{
+boolean detectESP8266(){
 	Serial.println("AT+RST");
 	delay(2000);
-	if (Serial.find("OK"))
-	{
+	if (Serial.find("OK")){
 		dbgSerial.println("ESP8266 found...");
 		return true;
-	}
-	else
-	{
+	}else{
 		dbgSerial.println("ESP8266 NOT found...");
 		return false;
 	}
 }
 
-void printIP()
-{
+void printIP(){
 	Serial.println("AT+CIFSR");
 	dbgSerial.println("ip address:");
 	while (Serial.available())
 		dbgSerial.write(Serial.read());
 }
 
-void fail()
-{
+void fail(){
 	digitalWrite(ERROR_LED, HIGH);
 	while (1);
 }
