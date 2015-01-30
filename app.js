@@ -10,6 +10,8 @@ app.post('/', function (req, res) {
     res.sendStatus(200);
 });
 
+var Firebase = require('firebase');
+var myRootRef = new Firebase(config.firebaseUrl);
 
 var server = app.listen(7777, function () {
     var host = server.address().address;
